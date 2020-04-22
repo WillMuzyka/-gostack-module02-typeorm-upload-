@@ -16,6 +16,8 @@ class ImportTransactionsService {
   async execute(filePath: string): Promise<Transaction[] | null> {
     const categoriesData: string[] = [];
     const transactionsData: TransactionsData[] = [];
+    const categoriesRepository = getRepository(Category);
+    const transactionRepository = getCustomRepository(TransactionRepository);
 
     // create a read stream and parsers
     const readStream = fs.createReadStream(filePath);
@@ -45,10 +47,10 @@ class ImportTransactionsService {
       return prev;
     }, 0);
 
-    if (2 * income - totalSum < 0) return null;
+    const balance = await transactionRepository.getBalance();
+    if (2 * income - totalSum + balance.total < 0) return null;
 
     // check the categories that already exist
-    const categoriesRepository = getRepository(Category);
     const existentCategories = await categoriesRepository.find({
       where: { title: In(categoriesData) },
     });
@@ -80,7 +82,6 @@ class ImportTransactionsService {
     );
 
     // create all the transactions
-    const transactionRepository = getCustomRepository(TransactionRepository);
     const transactionCreatePromise = transactionsDataFormatted.map(
       transactionData => {
         const newTransaction = transactionRepository.create(transactionData);
