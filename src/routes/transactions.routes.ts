@@ -16,7 +16,6 @@ const transactionsRouter = Router();
 transactionsRouter.get('/', async (request: Request, response: Response) => {
   const transactionRepository = getCustomRepository(TransactionsRepository);
   const transactions = await transactionRepository.find({
-    select: ['id', 'title', 'value', 'type'],
     relations: ['category'],
   });
 
