@@ -53,16 +53,18 @@ transactionsRouter.post(
   upload.array('file'),
   async (request: Request, response: Response) => {
     const importTransaction = new ImportTransactionsService();
+    const requestFiles = request.files as Express.Multer.File[];
     const transactionPromises: Promise<
-      Transaction[]
-    >[] = request.files.map((file: Express.Multer.File) =>
+      Transaction[] | null
+    >[] = requestFiles.map((file: Express.Multer.File) =>
       importTransaction.execute(file.path),
     );
     const transactionsArrays = await Promise.all(transactionPromises);
     const transactions: Transaction[] = [];
-    transactionsArrays.forEach(newTransactions =>
-      newTransactions.forEach(transaction => transactions.push(transaction)),
-    );
+    transactionsArrays.forEach(newTransactions => {
+      if (newTransactions === null) return;
+      newTransactions.forEach(transaction => transactions.push(transaction))
+    });
 
     return response.json(transactions);
   },
